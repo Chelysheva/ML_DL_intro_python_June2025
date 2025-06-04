@@ -60,37 +60,37 @@ y = df["deaths_per_million"]  # Target Variable
 # 4. Split the dataset into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1)
 
+# 5. Optional: exploration and feature selection using Pearson Correlation
 # Combine X_train and y_train for correlation analysis
 all_train = pd.concat([X_train, y_train], axis=1)
-
-# 5. Feature selection using Pearson Correlation
+# Run and plot correlations
 cor = all_train.corr()
 plt.figure(figsize=(10, 8))
 sns.heatmap(cor, annot=True, cmap=plt.cm.Reds)
 plt.title('Correlation Matrix')
 plt.show()
 
-# Select features highly correlated with the target variable
+# You can select features highly correlated with the target variable
 cor_target = abs(cor["deaths_per_million"])
 relevant_features = cor_target[cor_target > 0.5].index.tolist()
 print(f"Highly correlated features with target: {relevant_features}")
 
-# Check and remove multicollinear features
+# Or you can check and remove multicollinear features
 multicollinearity_pairs = [
     ("median_age", "life_expectancy"), 
     ("life_expectancy", "aged_65_older"),
     ("gdp_per_capita", "hdi"),          
-    ("cases_per_million", "cases")
 ]
-
 # Loop through the pairs and print the correlation
 for pair in multicollinearity_pairs:
     print(f"Correlation between {pair[0]} and {pair[1]}:\n", all_train[[pair[0], pair[1]]].corr(), "\n")
 
 # 6. Choosing the best regression model using selected features
-# Subset data based on feature selection
-X_a = X[["cases_per_million", "cases", "median_age", "gdp_per_capita"]]
-Xa_train, Xa_test, ya_train, ya_test = train_test_split(X_a, y, test_size=0.3, random_state=1) #rewrite it differently next time
+# Subset data based on feature selection (we won't subset - try at home)
+Xa_train = X_train
+Xa_test = X_test
+ya_train = y_train
+ya_test = y_test
 
 # Define models for evaluation
 models = [
@@ -124,7 +124,7 @@ plt.ylabel('Negative Mean Squared Error')
 plt.show()
 
 # 7. Train the best-performing model and evaluate it (hint: you can also try Ridge on your own)
-best_model = LinearRegression()
+best_model = RandomForestRegressor()
 best_model.fit(Xa_train, ya_train)
 predictions = best_model.predict(Xa_test)
 
@@ -157,13 +157,14 @@ plt.show()
 #Further exploration
 
 # Feature Importance
-feature_importance = pd.Series(best_model.coef_, index=X_a.columns)
-feature_importance.sort_values(ascending=False).plot(kind='bar', color='skyblue')
+feature_importance = pd.Series(best_model.feature_importances_, index=Xa_train.columns)
+feature_importance.sort_values(ascending=False).plot(kind='bar', color='forestgreen')
 plt.title('Feature Importance')
-plt.ylabel('Coefficient Magnitude')
+plt.ylabel('Importance Score')
+plt.tight_layout()
 plt.show()
-#Note1: cases_per_million is the most significant, while total cases have less influence
-#Note2: gdp_per_capita has a negative coefficient (higher GDP per capita - fewer deaths per million)
+#Note1: we calculate the decrease in impurity (MDI) across all trees, e.g. how much each feature contributes to reducing the prediction error
+#Note2: it doesn't indicate the direction of the relationship (unlike in LM)
 
 # Comparison Table
 results_df = pd.DataFrame({'Actual': ya_test_exp, 'Predicted': predictions_exp})

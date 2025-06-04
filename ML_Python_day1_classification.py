@@ -63,8 +63,9 @@ X_imputed = pd.DataFrame(imputer.fit_transform(X), columns=X.columns)
 # 3. Split the dataset into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X_imputed, y, test_size=0.3, random_state=1, stratify=y)
 
-# 4. Optional example of feature selection using SelectKBest with chi-square
+# 4. Optional example of feature selection using SelectKBest with ANOVA F-test
 select_k_best = SelectKBest(f_classif, k='all')  # We will just use 'all' to select all features
+#Note: You can also use chi-square but only on non-negative input feature
 X_train_kbest = select_k_best.fit_transform(X_train, y_train)
 X_test_kbest = select_k_best.transform(X_test)
 print("Selected features using SelectKBest:", X.columns[select_k_best.get_support(indices=True)])
